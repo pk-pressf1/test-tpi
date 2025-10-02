@@ -1,0 +1,295 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Ticket Booking Thin Client API",
+        "description": "REST API тонкого клиента для взаимодействия с внешним билетным шлюзом. Все данные проксируются от поставщика. База данных не используется.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api/v1",
+            "description": "Локальная разработка"
+        },
+        {
+            "url": "https://yourdomain.com/api/v1",
+            "description": "Продакшн"
+        }
+    ],
+    "paths": {
+        "/api/v1/events/{eventId}/book": {
+            "post": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Забронировать места на событие",
+                "description": "Бронирует указанные места для события. Требуется имя покупателя.",
+                "operationId": "7c15716c74af91ef78e16047ce700cd7",
+                "parameters": [
+                    {
+                        "name": "eventId",
+                        "in": "path",
+                        "description": "ID события",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 101
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Данные для бронирования",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BookingRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Места успешно забронированы",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные (например, недоступные места)"
+                    },
+                    "404": {
+                        "description": "Событие не найдено"
+                    },
+                    "502": {
+                        "description": "Ошибка шлюза"
+                    }
+                }
+            }
+        },
+        "/api/v1/events/{id}/seats": {
+            "get": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Получить схему зала (места) события",
+                "description": "Возвращает список мест для указанного события с информацией о доступности.",
+                "operationId": "95d4752fbea3e482a6342c703a0f1035",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID события",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 101
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Seat"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Событие не найдено"
+                    },
+                    "502": {
+                        "description": "Ошибка шлюза"
+                    }
+                }
+            }
+        },
+        "/api/v1/shows": {
+            "get": {
+                "tags": [
+                    "Shows"
+                ],
+                "summary": "Получить список мероприятий",
+                "description": "Возвращает список всех доступных мероприятий от билетного шлюза.",
+                "operationId": "59aadb8ee76fdeb037198da4122dd28d",
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Show"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Ошибка при обращении к внешнему шлюзу"
+                    }
+                }
+            }
+        },
+        "/api/v1/shows/{id}": {
+            "get": {
+                "tags": [
+                    "Shows"
+                ],
+                "summary": "Получить события мероприятия",
+                "description": "Возвращает список событий (сеансов) для указанного мероприятия.",
+                "operationId": "441b8f70ca2783918fb7061ba89cc63d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID мероприятия",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Event"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Мероприятие не найдено"
+                    },
+                    "502": {
+                        "description": "Ошибка шлюза"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Show": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Большой концерт"
+                    }
+                },
+                "type": "object"
+            },
+            "Event": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 101
+                    },
+                    "show_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "date_time": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-15T19:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "Seat": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 501
+                    },
+                    "row": {
+                        "type": "string",
+                        "example": "A"
+                    },
+                    "number": {
+                        "type": "string",
+                        "example": "12"
+                    },
+                    "is_available": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "BookingRequest": {
+                "required": [
+                    "seat_ids",
+                    "customer_name"
+                ],
+                "properties": {
+                    "seat_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "example": 501
+                        }
+                    },
+                    "customer_name": {
+                        "type": "string",
+                        "example": "Иван Петров"
+                    }
+                },
+                "type": "object"
+            },
+            "BookingResponse": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "booking_id": {
+                        "type": "string",
+                        "example": "BOOK-12345"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Места успешно забронированы"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Bookings",
+            "description": "Bookings"
+        },
+        {
+            "name": "Events",
+            "description": "Events"
+        },
+        {
+            "name": "Shows",
+            "description": "Shows"
+        }
+    ]
+}
